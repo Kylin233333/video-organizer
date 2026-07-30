@@ -7,8 +7,9 @@
 - 读取 Excel 文件中的抖音分享链接
 - 调用本地 API 解析视频无水印下载地址
 - 自动下载视频并保存
-- 文件名按 `序号_日期_作品名` 格式命名（序号从用户输入起始值开始递增）
+- 文件名按 `序号_日期_作品名` 格式命名（序号可配置起始值）
 - 支持断网重试、多备用链接自动切换
+- **图形界面**（Tkinter）：配置参数、实时日志、进度显示
 
 ## 环境要求
 
@@ -17,22 +18,22 @@
 
 ## 安装与运行
 
-### Linux / macOS
-
 ```bash
+# 创建虚拟环境
 python -m venv .venv
-source .venv/bin/activate
-pip install openpyxl pandas requests
-python 2.py
-```
 
-### Windows
+# 激活
+source .venv/bin/activate      # macOS / Linux
+# .venv\Scripts\activate       # Windows
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
+# 安装依赖
 pip install openpyxl pandas requests
-python 2.py
+
+# 运行图形界面
+python app.py
+
+# 或命令行模式
+python main.py
 ```
 
 ## Excel 文件格式
@@ -50,9 +51,17 @@ python 2.py
 | 春日风景 | https://v.douyin.com/xxxxx/ | 2024-01-15 |
 | 美食教程 | https://v.douyin.com/yyyyy/ | 2024-02-01 |
 
-## 配置说明
+## 图形界面使用
 
-编辑 `2.py` 文件顶部的配置区：
+运行 `python app.py` 后：
+
+1. **配置** 各参数（Excel 路径、输出目录、API 地址等）
+2. 输入 **起始序号**
+3. 点击 **▶ 开始下载**
+4. 实时查看 **日志** 和 **进度**
+5. 可随时点击 **■ 停止**
+
+## 命令行参数说明
 
 | 参数            | 说明                    | 默认值                                  |
 |-----------------|-------------------------|------------------------------------------|
@@ -62,19 +71,12 @@ python 2.py
 | `SLEEP_INTERVAL`| 每次请求间隔（秒）        | `3`                                      |
 | `MAX_RETRIES`   | 每个链接最大重试次数      | `3`                                      |
 
-## 使用方法
-
-1. 准备好 `工作簿1.xlsx` 文件（或修改 `EXCEL_PATH` 指向你的 Excel 文件）
-2. 确保 API 服务已启动
-3. 运行脚本，输入起始序号（整数）
-4. 脚本按行处理 Excel，下载视频到 `OUTPUT_DIR` 目录
-
 ## 下载文件命名规则
 
 ```
 序号_日期_作品名.mp4
 ```
 
-- **序号**：从用户输入的起始序号开始递增，三位数字补零（如 `001`）
+- **序号**：从配置的起始序号开始递增，三位数字补零（如 `001`）
 - **日期**：Excel C 列内容，为空则使用 `0000`
 - **作品名**：Excel A 列内容（自动过滤文件名非法字符）
