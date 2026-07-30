@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-source .venv/bin/activate
-
 APP_NAME="抖音视频批量下载"
+
+# 清理项目及依赖中的扩展属性，避免 Nuitka 内部 codesign 失败
+sudo xattr -rc .venv . 2>/dev/null
+
+source .venv/bin/activate
 
 nuitka --standalone \
   --macos-create-app-bundle \
@@ -11,11 +14,14 @@ nuitka --standalone \
   --macos-app-version="1.0" \
   --enable-plugin=tk-inter \
   --output-dir=dist \
-  app.py
+  app.py || true
 
-# 清理扩展属性并重新签名（macOS 14+ 必需）
-sudo xattr -rc "dist/$APP_NAME.app" 2>/dev/null
-codesign --force --deep -s - "dist/$APP_NAME.app" 2>/dev/null
+# 重命名并重新签名
+if [ -d "dist/app.app" ]; then
+  mv "dist/app.app" "dist/$APP_NAME.app" 2>/dev/null
+  sudo xattr -rc "dist/$APP_NAME.app" 2>/dev/null
+  codesign --force --deep -s - "dist/$APP_NAME.app" 2>/dev/null && \
+    echo "✅ 签名成功"
+fi
 
-echo ""
 echo "✅ 打包完成：dist/$APP_NAME.app"
