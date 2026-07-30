@@ -88,10 +88,12 @@ def main(config, log_callback=print, progress_callback=None, stop_event=None):
 
     total = len(df)
     seq = start_num
+    stopped = False
 
     for idx, row in df.iterrows():
         if stop_event and stop_event.is_set():
             log_callback("\n⏹ 用户已停止")
+            stopped = True
             break
 
         share_url = row[url_col]
@@ -116,6 +118,8 @@ def main(config, log_callback=print, progress_callback=None, stop_event=None):
         video_data = get_video_info(share_url, api_base, log_callback)
         if not video_data:
             seq += 1
+            if progress_callback:
+                progress_callback(idx + 1, total)
             continue
 
         video_info = video_data.get("video", {})
@@ -124,6 +128,8 @@ def main(config, log_callback=print, progress_callback=None, stop_event=None):
         if not url_list:
             log_callback("未找到视频下载链接")
             seq += 1
+            if progress_callback:
+                progress_callback(idx + 1, total)
             continue
 
         filename = f"{seq_str}_{date_str}_{safe_title}.mp4"
@@ -134,6 +140,9 @@ def main(config, log_callback=print, progress_callback=None, stop_event=None):
         log_callback("下载完成" if success else "下载失败")
 
         seq += 1
+        if progress_callback:
+            progress_callback(idx + 1, total)
         time.sleep(sleep_interval)
 
-    log_callback("\n所有任务处理完毕！")
+    if not stopped:
+        log_callback("\n所有任务处理完毕！")

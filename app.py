@@ -35,18 +35,6 @@ class DownloaderApp:
 
         cfg_frame = ttk.Frame(left)
         cfg_frame.pack(fill=tk.X)
-
-        def add_row(parent, label, row, default, btn_text=None, btn_cmd=None):
-            ttk.Label(parent, text=label).grid(row=row, column=0, sticky=tk.W, pady=4)
-            var = tk.StringVar(value=default)
-            entry = ttk.Entry(parent, textvariable=var)
-            entry.grid(row=row, column=1, sticky=tk.EW, padx=(5, 5), pady=4)
-            if btn_text:
-                btn = ttk.Button(parent, text=btn_text, command=btn_cmd(var))
-                btn.grid(row=row, column=2, padx=(0, 0), pady=4)
-            setattr(self, f"var_{label[:4]}", var)
-            return entry
-
         cfg_frame.columnconfigure(1, weight=1)
 
         self.var_excel = tk.StringVar(value="工作簿1.xlsx")
@@ -143,6 +131,12 @@ class DownloaderApp:
             "start_num": start_num,
         }
 
+        while not self.log_queue.empty():
+            try:
+                self.log_queue.get_nowait()
+            except queue.Empty:
+                break
+
         self.log_text.config(state=tk.NORMAL)
         self.log_text.delete(1.0, tk.END)
         self.log_text.config(state=tk.DISABLED)
@@ -187,6 +181,8 @@ class DownloaderApp:
         try:
             while True:
                 item = self.log_queue.get_nowait()
+                if not isinstance(item, tuple) or len(item) < 1:
+                    continue
                 tag = item[0]
 
                 if tag == "log":
@@ -200,6 +196,8 @@ class DownloaderApp:
                 elif tag == "done":
                     self.on_finish()
         except queue.Empty:
+            pass
+        except Exception:
             pass
         finally:
             self.root.after(100, self.poll_log_queue)
