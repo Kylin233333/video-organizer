@@ -1,27 +1,31 @@
 #!/bin/bash
 set -e
 
-APP_NAME="抖音视频批量下载"
-
-# 清理项目及依赖中的扩展属性，避免 Nuitka 内部 codesign 失败
-sudo xattr -rc .venv . 2>/dev/null
+APP_NAME="DouyinDownloader"
+BUILD_DIR="/tmp/nuitka_build_$$"
+OUT_DIR="$HOME/Desktop/$APP_NAME.app"
 
 source .venv/bin/activate
 
-nuitka --standalone \
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+
+.venv/bin/nuitka --standalone \
   --macos-create-app-bundle \
   --macos-app-name="$APP_NAME" \
   --macos-app-version="1.0" \
   --enable-plugin=tk-inter \
-  --output-dir=dist \
+  --output-dir="$BUILD_DIR" \
   app.py || true
 
-# 重命名并重新签名
-if [ -d "dist/app.app" ]; then
-  mv "dist/app.app" "dist/$APP_NAME.app" 2>/dev/null
-  sudo xattr -rc "dist/$APP_NAME.app" 2>/dev/null
-  codesign --force --deep -s - "dist/$APP_NAME.app" 2>/dev/null && \
-    echo "✅ 签名成功"
+if [ -d "$BUILD_DIR/app.app" ]; then
+  rm -rf "$OUT_DIR"
+  mv "$BUILD_DIR/app.app" "$OUT_DIR"
+  rm -rf "$BUILD_DIR"
+  xattr -rc "$OUT_DIR" 2>/dev/null
+  codesign --force --deep -s - "$OUT_DIR" 2>/dev/null
+  echo "✅ 打包完成：$OUT_DIR"
+else
+  echo "❌ 构建失败"
+  exit 1
 fi
-
-echo "✅ 打包完成：dist/$APP_NAME.app"
